@@ -2,6 +2,8 @@
 
 This driver is for the Adafruit TSL2561 Breakout, and is based on Adafruit's Unified Sensor Library (Adafruit_Sensor).
 
+The driver support both manual and 'auto' gain (it will automatically switch between 1x and 16x gain depending on the light levels when auto-gain is enabled), as well as automatic clipping detection (it will return '0' lux when the sensor is saturated and data is unreliable).
+
 ## About the TSL2561 ##
 
 The TSL2561 is a 16-bit digital (I2C) light sensor, with adjustable gain and 'integration time'.  
