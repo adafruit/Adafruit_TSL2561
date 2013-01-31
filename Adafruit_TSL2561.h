@@ -170,8 +170,7 @@ tsl2561Gain_t;
 
 class Adafruit_TSL2561 : public Adafruit_Sensor {
  public:
-  Adafruit_TSL2561(uint8_t addr);
-  Adafruit_TSL2561(uint8_t addr, int32_t sensorID);
+  Adafruit_TSL2561(uint8_t addr, int32_t sensorID = -1);
   boolean begin(void);
   
   /* TSL2561 Functions */

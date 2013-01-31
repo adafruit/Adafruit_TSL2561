@@ -165,21 +165,6 @@ void Adafruit_TSL2561::getData (uint16_t *broadband, uint16_t *ir)
     Constructor
 */
 /**************************************************************************/
-Adafruit_TSL2561::Adafruit_TSL2561(uint8_t addr) 
-{
-  _addr = addr;
-  _tsl2561Initialised = false;
-  _tsl2561AutoGain = false;
-  _tsl2561IntegrationTime = TSL2561_INTEGRATIONTIME_13MS;
-  _tsl2561Gain = TSL2561_GAIN_1X;
-  _tsl2561SensorID = -1;
-}
-
-/**************************************************************************/
-/*!
-    Constructor
-*/
-/**************************************************************************/
 Adafruit_TSL2561::Adafruit_TSL2561(uint8_t addr, int32_t sensorID) 
 {
   _addr = addr;
