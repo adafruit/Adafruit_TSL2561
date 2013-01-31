@@ -2,17 +2,29 @@
 
 This driver is for the Adafruit TSL2561 Breakout, and is based on Adafruit's Unified Sensor Library (Adafruit_Sensor).
 
-The driver support both manual and 'auto' gain (it will automatically switch between 1x and 16x gain depending on the light levels when auto-gain is enabled), as well as automatic clipping detection (it will return '0' lux when the sensor is saturated and data is unreliable).
+The driver supports manual or 'auto' gain. Adjusting the gain allows you to make the sensor more or less 'sensitive' to light (depending on if you are indoors or outdoors, for example):
+```
+tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
+tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
+tsl.enableAutoGain(true);          /* Auto-gain ... switches automatically between 1x and 16x */
+```
+
+The driver also supports as automatic clipping detection, and will return '0' lux when the sensor is saturated and data is unreliable.
 
 ## About the TSL2561 ##
 
 The TSL2561 is a 16-bit digital (I2C) light sensor, with adjustable gain and 'integration time'.  
 
-Adjusting the gain allows you to make the sensor more or less 'sensitive' to light (depending on if you are indoors or outdoors, for example).  Adjusting the 'integration time' essentially increases the resolution of the device, since the analog converter inside the chip has time to take more samples.
+Adjusting the 'integration time' essentially increases the resolution of the device, since the analog converter inside the chip has time to take more samples.  The integration time can be set as follows:
+```
+tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
+tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+```
 
 One of the big advantages of the TSL2561 is that it is capable of measuring both broadband (visible plus infrared) and infrared light thanks to two distinct sensing units on the device.  This is important in certain lighting environments to be able to read the light level reliably.
 
-Mor information on the TSL2561 can be found in the datasheet: http://www.adafruit.com/datasheets/TSL2561.pdf
+More information on the TSL2561 can be found in the datasheet: http://www.adafruit.com/datasheets/TSL2561.pdf
 
 ## What is the Adafruit Unified Sensor Library? ##
 
