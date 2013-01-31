@@ -31,22 +31,6 @@
 
 /**************************************************************************/
 /*!
-    @brief  Sends a single command byte over I2C
-*/
-/**************************************************************************/
-void Adafruit_TSL2561::writeCmd (uint8_t cmd)
-{
-  Wire.beginTransmission(_addr);
-  #if ARDUINO >= 100
-  Wire.write(cmd);
-  #else
-  Wire.send(cmd);
-  #endif
-  Wire.endTransmission();
-}
-
-/**************************************************************************/
-/*!
     @brief  Writes a register and an 8 bit value over I2C
 */
 /**************************************************************************/
