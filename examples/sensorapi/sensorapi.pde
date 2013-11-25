@@ -35,7 +35,7 @@
    2013/JAN/31  - First version (KTOWN)
 */
    
-Adafruit_TSL2561 tsl = Adafruit_TSL2561(TSL2561_ADDR_FLOAT, 12345);
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 /**************************************************************************/
 /*

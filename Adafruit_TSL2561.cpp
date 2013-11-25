@@ -34,7 +34,7 @@
     @brief  Writes a register and an 8 bit value over I2C
 */
 /**************************************************************************/
-void Adafruit_TSL2561::write8 (uint8_t reg, uint32_t value)
+void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
 {
   Wire.beginTransmission(_addr);
   #if ARDUINO >= 100
@@ -52,7 +52,7 @@ void Adafruit_TSL2561::write8 (uint8_t reg, uint32_t value)
     @brief  Reads an 8 bit value over I2C
 */
 /**************************************************************************/
-uint8_t Adafruit_TSL2561::read8(uint8_t reg)
+uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
 {
   Wire.beginTransmission(_addr);
   #if ARDUINO >= 100
@@ -75,7 +75,7 @@ uint8_t Adafruit_TSL2561::read8(uint8_t reg)
     @brief  Reads a 16 bit values over I2C
 */
 /**************************************************************************/
-uint16_t Adafruit_TSL2561::read16(uint8_t reg)
+uint16_t Adafruit_TSL2561_Unified::read16(uint8_t reg)
 {
   uint16_t x; uint16_t t;
 
@@ -105,7 +105,7 @@ uint16_t Adafruit_TSL2561::read16(uint8_t reg)
     Enables the device
 */
 /**************************************************************************/
-void Adafruit_TSL2561::enable(void)
+void Adafruit_TSL2561_Unified::enable(void)
 {
   /* Enable the device by setting the control bit to 0x03 */
   write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWERON);
@@ -116,7 +116,7 @@ void Adafruit_TSL2561::enable(void)
     Disables the device (putting it in lower power sleep mode)
 */
 /**************************************************************************/
-void Adafruit_TSL2561::disable(void)
+void Adafruit_TSL2561_Unified::disable(void)
 {
   /* Turn the device off to save power */
   write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWEROFF);
@@ -127,7 +127,7 @@ void Adafruit_TSL2561::disable(void)
     Private function to read luminosity on both channels
 */
 /**************************************************************************/
-void Adafruit_TSL2561::getData (uint16_t *broadband, uint16_t *ir)
+void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
 {
   /* Enable the device by setting the control bit to 0x03 */
   enable();
@@ -165,7 +165,7 @@ void Adafruit_TSL2561::getData (uint16_t *broadband, uint16_t *ir)
     Constructor
 */
 /**************************************************************************/
-Adafruit_TSL2561::Adafruit_TSL2561(uint8_t addr, int32_t sensorID) 
+Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID) 
 {
   _addr = addr;
   _tsl2561Initialised = false;
@@ -185,7 +185,7 @@ Adafruit_TSL2561::Adafruit_TSL2561(uint8_t addr, int32_t sensorID)
     doing anything else)
 */
 /**************************************************************************/
-boolean Adafruit_TSL2561::begin(void) 
+boolean Adafruit_TSL2561_Unified::begin(void) 
 {
   Wire.begin();
 
@@ -213,7 +213,7 @@ boolean Adafruit_TSL2561::begin(void)
             data from the sensor
 */
 /**************************************************************************/
-void Adafruit_TSL2561::enableAutoGain(bool enable)
+void Adafruit_TSL2561_Unified::enableAutoGain(bool enable)
 {
    _tsl2561AutoGain = enable ? true : false;
 }
@@ -223,7 +223,7 @@ void Adafruit_TSL2561::enableAutoGain(bool enable)
     Sets the integration time for the TSL2561
 */
 /**************************************************************************/
-void Adafruit_TSL2561::setIntegrationTime(tsl2561IntegrationTime_t time)
+void Adafruit_TSL2561_Unified::setIntegrationTime(tsl2561IntegrationTime_t time)
 {
   if (!_tsl2561Initialised) begin();
 
@@ -245,7 +245,7 @@ void Adafruit_TSL2561::setIntegrationTime(tsl2561IntegrationTime_t time)
     Adjusts the gain on the TSL2561 (adjusts the sensitivity to light)
 */
 /**************************************************************************/
-void Adafruit_TSL2561::setGain(tsl2561Gain_t gain)
+void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain)
 {
   if (!_tsl2561Initialised) begin();
 
@@ -268,7 +268,7 @@ void Adafruit_TSL2561::setGain(tsl2561Gain_t gain)
             the TSL2561, adjusting gain if auto-gain is enabled
 */
 /**************************************************************************/
-void Adafruit_TSL2561::getLuminosity (uint16_t *broadband, uint16_t *ir)
+void Adafruit_TSL2561_Unified::getLuminosity (uint16_t *broadband, uint16_t *ir)
 {
   bool valid = false;
 
@@ -356,7 +356,7 @@ void Adafruit_TSL2561::getLuminosity (uint16_t *broadband, uint16_t *ir)
     Returns 0 if the sensor is saturated and the values are unreliable.
 */
 /**************************************************************************/
-uint32_t Adafruit_TSL2561::calculateLux(uint16_t broadband, uint16_t ir)
+uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 {
   unsigned long chScale;
   unsigned long channel1;
@@ -470,7 +470,7 @@ uint32_t Adafruit_TSL2561::calculateLux(uint16_t broadband, uint16_t ir)
     @brief  Gets the most recent sensor event
 */
 /**************************************************************************/
-void Adafruit_TSL2561::getEvent(sensors_event_t *event)
+void Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
 {
   uint16_t broadband, ir;
   
@@ -492,7 +492,7 @@ void Adafruit_TSL2561::getEvent(sensors_event_t *event)
     @brief  Gets the sensor_t data
 */
 /**************************************************************************/
-void Adafruit_TSL2561::getSensor(sensor_t *sensor)
+void Adafruit_TSL2561_Unified::getSensor(sensor_t *sensor)
 {
   /* Clear the sensor_t object */
   memset(sensor, 0, sizeof(sensor_t));
