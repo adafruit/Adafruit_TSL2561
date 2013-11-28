@@ -23,7 +23,7 @@
 #include <util/delay.h>
 #include <stdlib.h>
 
-#include "Adafruit_TSL2561.h"
+#include "Adafruit_TSL2561_U.h"
 
 /*========================================================================*/
 /*                          PRIVATE FUNCTIONS                             */
