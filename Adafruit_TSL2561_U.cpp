@@ -19,8 +19,12 @@
     v1.0 - First release (previously TSL2561)
 */
 /**************************************************************************/
+#if defined(__AVR__)
 #include <avr/pgmspace.h>
 #include <util/delay.h>
+#else
+#include "pgmspace.h"
+#endif
 #include <stdlib.h>
 
 #include "Adafruit_TSL2561_U.h"
