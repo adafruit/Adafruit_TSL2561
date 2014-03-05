@@ -484,7 +484,7 @@ void Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
   event->version   = sizeof(sensors_event_t);
   event->sensor_id = _tsl2561SensorID;
   event->type      = SENSOR_TYPE_LIGHT;
-  event->timestamp = 0;
+  event->timestamp = millis();
 
   /* Calculate the actual lux value */
   getLuminosity(&broadband, &ir);
