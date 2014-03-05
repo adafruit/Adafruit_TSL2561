@@ -217,7 +217,7 @@ boolean Adafruit_TSL2561_Unified::begin(void)
             data from the sensor
 */
 /**************************************************************************/
-void Adafruit_TSL2561_Unified::enableAutoGain(bool enable)
+void Adafruit_TSL2561_Unified::enableAutoRange(bool enable)
 {
    _tsl2561AutoGain = enable ? true : false;
 }

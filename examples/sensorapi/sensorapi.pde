@@ -69,7 +69,7 @@ void configureSensor(void)
   /* You can also manually set the gain or enable auto-gain support */
   // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
   // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
-  tsl.enableAutoGain(true);          /* Auto-gain ... switches automatically between 1x and 16x */
+  tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
   
   /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
   tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
