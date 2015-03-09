@@ -181,7 +181,7 @@ class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
   
   /* Unified Sensor API Functions */  
-  void getEvent(sensors_event_t*);
+  bool getEvent(sensors_event_t*);
   void getSensor(sensor_t*);
 
  private:

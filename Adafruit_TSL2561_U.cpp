@@ -478,7 +478,7 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
     @brief  Gets the most recent sensor event
 */
 /**************************************************************************/
-void Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
+bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
 {
   uint16_t broadband, ir;
   
@@ -493,6 +493,8 @@ void Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
   /* Calculate the actual lux value */
   getLuminosity(&broadband, &ir);
   event->light = calculateLux(broadband, ir);
+  
+  return true;
 }
 
 /**************************************************************************/
