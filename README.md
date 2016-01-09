@@ -9,7 +9,7 @@ tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sen
 tsl.enableAutoGain(true);          /* Auto-gain ... switches automatically between 1x and 16x */
 ```
 
-The driver also supports as automatic clipping detection, and will return '0' lux when the sensor is saturated and data is unreliable.
+The driver also supports as automatic clipping detection, and will return '65536' lux when the sensor is saturated and data is unreliable. tsl.getEvent will return false in case of saturation and true in case of valid light data.
 
 ## About the TSL2561 ##
 
