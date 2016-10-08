@@ -96,7 +96,7 @@ void setup(void)
   /* Initialise the sensor */
   if(!tsl.begin())
   {
-    /* There was a problem detecting the ADXL345 ... check your connections */
+    /* There was a problem detecting the TSL2561 ... check your connections */
     Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
