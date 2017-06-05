@@ -22,6 +22,8 @@
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #include <util/delay.h>
+#elif defined(ESP8266)
+#include <pgmspace.h>
 #else
 #include "pgmspace.h"
 #endif
