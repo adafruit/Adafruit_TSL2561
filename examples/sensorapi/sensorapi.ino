@@ -94,6 +94,8 @@ void setup(void)
   Serial.println("Light Sensor Test"); Serial.println("");
   
   /* Initialise the sensor */
+  //use tsl.begin() to default to Wire, 
+  //tsl.begin(&Wire2) directs api to use Wire2, etc.
   if(!tsl.begin())
   {
     /* There was a problem detecting the TSL2561 ... check your connections */
