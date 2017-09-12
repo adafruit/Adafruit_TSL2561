@@ -22,7 +22,7 @@
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #include <util/delay.h>
-#else
+#elif !defined(TEENSYDUINO)
 #include "pgmspace.h"
 #endif
 #include <stdlib.h>
@@ -44,15 +44,15 @@
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
 {
-  Wire.beginTransmission(_addr);
+  wire -> beginTransmission(_addr);
   #if ARDUINO >= 100
-  Wire.write(reg);
-  Wire.write(value & 0xFF);
+  wire -> write(reg);
+  wire -> write(value & 0xFF);
   #else
-  Wire.send(reg);
-  Wire.send(value & 0xFF);
+  wire -> send(reg);
+  wire -> send(value & 0xFF);
   #endif
-  Wire.endTransmission();
+  wire -> endTransmission();
 }
 
 /**************************************************************************/
@@ -62,19 +62,19 @@ void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
 /**************************************************************************/
 uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
 {
-  Wire.beginTransmission(_addr);
+  wire -> beginTransmission(_addr);
   #if ARDUINO >= 100
-  Wire.write(reg);
+  wire -> write(reg);
   #else
-  Wire.send(reg);
+  wire -> send(reg);
   #endif
-  Wire.endTransmission();
+  wire -> endTransmission();
 
-  Wire.requestFrom(_addr, 1);
+  wire -> requestFrom(_addr, 1);
   #if ARDUINO >= 100
-  return Wire.read();
+  return wire -> read();
   #else
-  return Wire.receive();
+  return wire -> receive();
   #endif
 }
 
@@ -87,21 +87,21 @@ uint16_t Adafruit_TSL2561_Unified::read16(uint8_t reg)
 {
   uint16_t x; uint16_t t;
 
-  Wire.beginTransmission(_addr);
+  wire -> beginTransmission(_addr);
   #if ARDUINO >= 100
-  Wire.write(reg);
+  wire -> write(reg);
   #else
-  Wire.send(reg);
+  wire -> send(reg);
   #endif
-  Wire.endTransmission();
+  wire -> endTransmission();
 
-  Wire.requestFrom(_addr, 2);
+  wire -> requestFrom(_addr, 2);
   #if ARDUINO >= 100
-  t = Wire.read();
-  x = Wire.read();
+  t = wire -> read();
+  x = wire -> read();
   #else
-  t = Wire.receive();
-  x = Wire.receive();
+  t = wire -> receive();
+  x = wire -> receive();
   #endif
   x <<= 8;
   x |= t;
@@ -193,10 +193,22 @@ Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorI
     doing anything else)
 */
 /**************************************************************************/
-boolean Adafruit_TSL2561_Unified::begin(void) 
+boolean Adafruit_TSL2561_Unified::begin() 
 {
-  Wire.begin();
+  wire = &Wire;
+  wire -> begin();
+  return init();
+}
 
+boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire) 
+{
+  wire = theWire;
+  wire -> begin();
+  return init();
+}
+
+boolean Adafruit_TSL2561_Unified::init()
+{
   /* Make sure we're actually connected */
   uint8_t x = read8(TSL2561_REGISTER_ID);
   if (!(x & 0x0A))
