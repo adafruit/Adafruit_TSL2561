@@ -1,5 +1,6 @@
 /*!
  * @file Adafruit_TSL2561_U.h
+ * @author   K. Townsend (Adafruit Industries), T.Jacobs (CegekaLabs)
  *
  * This is part of Adafruit's FXOS8700 driver for the Arduino platform.  It is
  * designed specifically to work with the Adafruit FXOS8700 breakout:
@@ -16,12 +17,46 @@
  *
  * BSD license, all text here must be included in any redistribution.
  *
+ * @section LICENSE
+ *
+ * Software License Agreement (BSD License)
+ *
+ * Copyright (c) 2013, Adafruit Industries
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holders nor the
+ * names of its contributors may be used to endorse or promote products
+ * derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 #ifndef ADAFRUIT_TSL2561_H_
 #define ADAFRUIT_TSL2561_H_
 
-#include <Arduino.h>
+#if ARDUINO >= 100
+ #include <Arduino.h>
+#else
+ #include <WProgram.h>
+#endif
+
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
@@ -35,7 +70,7 @@
 #define TSL2561_ADDR_HIGH         (0x49)    ///< Default address (pin pulled high)
 
 // Lux calculations differ slightly for CS package
-//#define TSL2561_PACKAGE_CS                ///< Chip scale package     
+//#define TSL2561_PACKAGE_CS                ///< Chip scale package
 #define TSL2561_PACKAGE_T_FN_CL             ///< Dual Flat No-Lead package
 
 #define TSL2561_COMMAND_BIT       (0x80)    ///< Must be 1
@@ -125,7 +160,7 @@
 /** TSL2561 I2C Registers */
 enum
 {
-  TSL2561_REGISTER_CONTROL          = 0x00, // Control/power register 
+  TSL2561_REGISTER_CONTROL          = 0x00, // Control/power register
   TSL2561_REGISTER_TIMING           = 0x01, // Set integration time register
   TSL2561_REGISTER_THRESHHOLDL_LOW  = 0x02, // Interrupt low threshold low-byte
   TSL2561_REGISTER_THRESHHOLDL_HIGH = 0x03, // Interrupt low threshold high-byte
@@ -157,47 +192,64 @@ typedef enum
 }
 tsl2561Gain_t;
 
-
+typedef enum
+{
+  TSL2561_INTERRUPTCTL_DISABLE         = 0x00,    // 0B00
+  TSL2561_INTERRUPTCTL_LEVEL           = 0x01,    // 0B01
+  TSL2561_INTERRUPTCTL_SMBALERT        = 0x02,    // 0B10
+  TSL2561_INTERRUPTCTL_TEST            = 0x03     // 0B11
+}
+tsl2561InterruptControl_t;
 
 /**************************************************************************/
-/*! 
+/*!
     @brief  Class that stores state and functions for interacting with TSL2561 Light Sensor
 */
 /**************************************************************************/
 class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
  public:
-  Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1);
+  Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1, bool allowSleep = true);
   boolean begin(void);
   boolean begin(TwoWire *theWire);
   boolean init();
-  
+
   /* TSL2561 Functions */
   void enableAutoRange(bool enable);
   void setIntegrationTime(tsl2561IntegrationTime_t time);
   void setGain(tsl2561Gain_t gain);
   void getLuminosity (uint16_t *broadband, uint16_t *ir);
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
-  
-  /* Unified Sensor API Functions */  
+
+  /* Unified Sensor API Functions */
   bool getEvent(sensors_event_t*);
   void getSensor(sensor_t*);
 
+  // Interrupt functions
+  void setInterruptControl(tsl2561InterruptControl_t intcontrol, uint8_t intpersist);
+  void setInterruptThreshold(uint16_t lowThreshold, uint16_t highThreshold);
+  void clearLevelInterrupt(void);
+
  private:
   TwoWire *_i2c;
- 
+
   int8_t _addr;
   boolean _tsl2561Initialised;
   boolean _tsl2561AutoGain;
   tsl2561IntegrationTime_t _tsl2561IntegrationTime;
   tsl2561Gain_t _tsl2561Gain;
   int32_t _tsl2561SensorID;
-  
+  boolean _allowSleep;
+
   void     enable (void);
   void     disable (void);
-  void     write8 (uint8_t reg, uint8_t value);
+  void     write8 (uint8_t reg, uint32_t value);
+  void     writereg8 (uint8_t reg);
+  void     write16 (uint8_t reg, uint32_t value);
   uint8_t  read8 (uint8_t reg);
   uint16_t read16 (uint8_t reg);
   void     getData (uint16_t *broadband, uint16_t *ir);
+
+
 };
 
 #endif // ADAFRUIT_TSL2561_H
