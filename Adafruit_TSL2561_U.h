@@ -157,6 +157,11 @@
 #define TSL2561_DELAY_INTTIME_101MS   (120)   ///< Wait 120ms for 101ms integration
 #define TSL2561_DELAY_INTTIME_402MS   (450)   ///< Wait 450ms for 402ms integration
 
+// Approximations for Channel 1 to Channel 0 ratio for specific light conditions
+// -> See discussion near calculateRawCH0() function for details
+#define TSL2561_APPROXCHRATIO_SUN 0.325
+#define TSL2561_APPROXCHRATIO_LED 0.100
+
 /** TSL2561 I2C Registers */
 enum
 {
@@ -219,6 +224,7 @@ class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
   void setGain(tsl2561Gain_t gain);
   void getLuminosity (uint16_t *broadband, uint16_t *ir);
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
+  uint32_t calculateRawCH0(uint16_t lux, float approxChRatio = TSL2561_APPROXCHRATIO_SUN);
 
   /* Unified Sensor API Functions */
   bool getEvent(sensors_event_t*);
