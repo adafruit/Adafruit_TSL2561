@@ -79,11 +79,12 @@ void configureSensor(void)
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
 
-  /* Configure interrupt thresholds
-     Note: value in raw sensor units, BEFORE being calculated to lux...
-     Calculating a given lux value to a sensor threshold value is left
-     as an exercise for the reader :) */
-  tsl.setInterruptThreshold(0,3000);
+  /* Configure interrupt thresholds */
+  // First: convert lux value to raw sensor value, using "sunlight" approximation.
+  // Other approximations, see Adafruit_TSL2561_U.h
+  uint32_t threshold = tsl.calculateRawCH0(3000, TSL2561_APPROXCHRATIO_SUN);
+  tsl.setInterruptThreshold(0,threshold);
+
   /* Enable level interrupt, trigger interrupt after 5 integration times
      -> Because integration time is 13ms by default, this means the threshold
         needs to be exceeded for more than 65ms before the interrupt is triggered.

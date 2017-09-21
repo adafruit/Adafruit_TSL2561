@@ -150,6 +150,11 @@
 #define TSL2561_CLIPPING_101MS    (37000)
 #define TSL2561_CLIPPING_402MS    (65000)
 
+// Approximations for Channel 1 to Channel 0 ratio for specific light conditions
+// -> See discussion near calculateRawCH0() function for details
+#define TSL2561_APPROXCHRATIO_SUN 0.325
+#define TSL2561_APPROXCHRATIO_LED 0.100
+
 enum
 {
   TSL2561_REGISTER_CONTROL          = 0x00,
@@ -205,6 +210,7 @@ class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
   void setGain(tsl2561Gain_t gain);
   void getLuminosity (uint16_t *broadband, uint16_t *ir);
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
+  uint32_t calculateRawCH0(uint16_t lux, float approxChRatio = TSL2561_APPROXCHRATIO_SUN);
 
   /* Unified Sensor API Functions */
   bool getEvent(sensors_event_t*);
