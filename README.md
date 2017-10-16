@@ -29,22 +29,19 @@ One of the big advantages of the TSL2561 is that it is capable of measuring both
 
 More information on the TSL2561 can be found in the datasheet: http://www.adafruit.com/datasheets/TSL2561.pdf
 
-## What is the Adafruit Unified Sensor Library? ##
+## Interrupt support ##
 
-The Adafruit Unified Sensor Library (Adafruit_Sensor) provides a common interface and data type for any supported sensor.  It defines some basic information about the sensor (sensor limits, etc.), and returns standard SI units of a specific type and scale for each supported sensor type.
+The TSL2561 can trigger an external interrupt on your MCU by connecting the "INT" pin of the Adafruit breakout to an external-interrupt capable pin on your microcontroller. The INT signal is active low.
 
-It provides a simple abstraction layer between your application and the actual sensor HW, allowing you to drop in any comparable sensor with only one or two lines of code to change in your project (essentially the constructor since the functions to read sensor data and get information about the sensor are defined in the base Adafruit_Sensor class).
+A challenge is determining appropriate values for configuring the interrupt. The TSL2561 only supports threshold detection on it's broad spectrum (channel 0) sensor. Unfortunately, the calculation to get the amount of "lux" (the prefered SI unit), involves the ratio of the values of channel 0 (broadband spectrum) and channel 1 (IR spectrum). Given that you only can set a threshold for channel 0, converting a lux threshold to a channel 0 value will require an estimation for channel 1.
 
-This is imporant useful for two reasons:
+You can use the calculateRawCH0() function to take a threshold value in lux and provide an educated guess for what the channel 0 value might be. A custom approximation for the channel 1/channel 0 ratio can be provided if needed; by default is uses an estimation that is correct for sunlight detected at noon. Deviations of this approximation (and hence of the interrupt being triggered incorrectly) are known for light sources that have a different IR (channel 1) light emission, e.g. LED light sources.
 
-1.) You can use the data right away because it's already converted to SI units that you understand and can compare, rather than meaningless values like 0..1023.
+The best approach is to take an educated guess at the channel 0 sensor value given a lux threshold using the calculateRawCH0() function. The value returned by this function can be considered a good reference value. However, always be sure to check in your code (using the calculateLux() function) whether your desired lux threshold value was actually exceeded! In other words: be ready to handle interrupts being triggered incorrectly.
 
-2.) Because SI units are standardised in the sensor library, you can also do quick sanity checks working with new sensors, or drop in any comparable sensor if you need better sensitivity or if a lower cost unit becomes available, etc. 
-
-Light sensors will always report units in lux, gyroscopes will always report units in rad/s, etc. ... freeing you up to focus on the data, rather than digging through the datasheet to understand what the sensor's raw numbers really mean.
+AFAIK, due to the fact that you can only set channel 0 thresholds, there is no workaround for this "guestimation" protocol for using interrupts with the TSL2561. If you need a lux-based threshold definition, you might want to consider other light sensors.
 
 ## About this Driver ##
 
-Adafruit invests time and resources providing this open source code.  Please support Adafruit and open-source hardware by purchasing products from Adafruit!
-
 Written by Kevin (KTOWN) Townsend for Adafruit Industries.
+Additions for interrupt support by Tim Jacobs in 2017.
