@@ -1,7 +1,7 @@
 /**************************************************************************/
 /*!
     @file     Adafruit_TSL2561.cpp
-    @author   K.Townsend (Adafruit Industries)
+    @author   K.Townsend (Adafruit Industries), T.Jacobs (CegekaLabs)
     @license  BSD (see license.txt)
 
     Driver for the TSL2561 digital luminosity (light) sensors.
@@ -14,6 +14,7 @@
 
     @section  HISTORY
 
+    v3.0 - Added interrupt support
     v2.0 - Rewrote driver for Adafruit_Sensor and Auto-Gain support, and
            added lux clipping check (returns 0 lux on sensor saturation)
     v1.0 - First release (previously TSL2561)
@@ -53,6 +54,36 @@ void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
   wire -> send(value & 0xFF);
   #endif
   wire -> endTransmission();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Writes a register over I2C
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::writereg8 (uint8_t reg)
+{
+  wire -> beginTransmission(_addr);
+  #if ARDUINO >= 100
+  wire -> write(reg);
+  #else
+  wire -> send(reg);
+  #endif
+  wire -> endTransmission();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Writes a register and an 16 bit value over I2C
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::write16 (uint8_t reg, uint32_t value)
+{
+  // Only accept at highest TSL2561_REGISTER_CHAN1_LOW = 0x0E as input
+  if((reg & 0x0F) < 0x0F) {
+    write8(reg, lowByte(value));
+    write8(reg+1, highByte(value));
+  }
 }
 
 /**************************************************************************/
@@ -161,7 +192,7 @@ void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
   *ir = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW);
 
   /* Turn the device off to save power */
-  disable();
+  if(_allowSleep) disable();
 }
 
 /*========================================================================*/
@@ -171,9 +202,13 @@ void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
 /**************************************************************************/
 /*!
     Constructor
+
+    allowSleep      When true, puts the device to sleep after every operation,
+                    to conserve power. Do not put the device to sleep if
+                    you are using interrupts, i.e. supply false here.
 */
 /**************************************************************************/
-Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID) 
+Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID, bool allowSleep)
 {
   _addr = addr;
   _tsl2561Initialised = false;
@@ -181,6 +216,7 @@ Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorI
   _tsl2561IntegrationTime = TSL2561_INTEGRATIONTIME_13MS;
   _tsl2561Gain = TSL2561_GAIN_1X;
   _tsl2561SensorID = sensorID;
+  _allowSleep = allowSleep;
 }
 
 /*========================================================================*/
@@ -193,14 +229,14 @@ Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorI
     doing anything else)
 */
 /**************************************************************************/
-boolean Adafruit_TSL2561_Unified::begin() 
+boolean Adafruit_TSL2561_Unified::begin()
 {
   wire = &Wire;
   wire -> begin();
   return init();
 }
 
-boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire) 
+boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire)
 {
   wire = theWire;
   wire -> begin();
@@ -222,11 +258,11 @@ boolean Adafruit_TSL2561_Unified::init()
   setGain(_tsl2561Gain);
 
   /* Note: by default, the device is in power down mode on bootup */
-  disable();
+  if(_allowSleep) disable();
 
   return true;
 }
-  
+
 /**************************************************************************/
 /*!
     @brief  Enables or disables the auto-gain settings when reading
@@ -257,7 +293,7 @@ void Adafruit_TSL2561_Unified::setIntegrationTime(tsl2561IntegrationTime_t time)
   _tsl2561IntegrationTime = time;
 
   /* Turn the device off to save power */
-  disable();
+  if(_allowSleep) disable();
 }
 
 /**************************************************************************/
@@ -279,7 +315,7 @@ void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain)
   _tsl2561Gain = gain;
 
   /* Turn the device off to save power */
-  disable();
+  if(_allowSleep) disable();
 }
 
 /**************************************************************************/
@@ -380,8 +416,8 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 {
   unsigned long chScale;
   unsigned long channel1;
-  unsigned long channel0;  
-  
+  unsigned long channel0;
+
   /* Make sure the sensor isn't saturated! */
   uint16_t clipThreshold;
   switch (_tsl2561IntegrationTime)
@@ -487,6 +523,172 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 
 /**************************************************************************/
 /*!
+    Converts a standard SI lux value to a raw sensor value (for channel 0),
+    taking into account the configured gain for the sensor. Required for
+    SI lux consistency, and needed for interrupt threshold configuration.
+
+    Important:
+     * first configure the integration time and gain.
+     * in case of autogain, the gain factor can be adjusted depending on the
+       measurement; you might want to perform a measurement first to autoconfigure
+       it, or avoid autogain alltogether with interrupts.
+     * changing the integration value requires changing the interrupt thresholds!
+
+    -----------------------------------------------------------------------
+
+    TIJA: So, funny story: the raw values (ch0/ch1) to lux conversion takes
+    both values into account. For interrupts, we can only configure a
+    threshold for channel 0. So the problem is: given a lux value, can
+    we make an educated guess for what the channel 0 value would be, leaving
+    channel 1 as an undetermined parameter?
+
+    If you look at the datasheet p23, you'll see the ratio of both is
+    determining what formula to use.
+    (https://cdn-shop.adafruit.com/datasheets/TSL2561.pdf)
+
+    Here, we take the naieve assumption that the expected ratio is that as
+    covered by the sensitivity curves of Figure 4, p8. The ratio of the
+    area under both curves is roughly:
+      * area under curve channel0: 24 squares
+      * area under curve channel1: 7.5 squares
+      * ratio of areas under curve: 7.5 / 24 = 0.3125
+
+    So the most unbiased estimation for the ration is somewhere around 0.31 - 0.32.
+    For conditions under sunlight, this was experimentally verified and more or
+    less holds. Under artificial light (e.g. LED light), the IR component is
+    (not very surprisingly) much smaller and leans more towards ratio 0.11 !!!
+    Very roughly speaking the (black body) light spectrum of the sun is, again
+    very roughly speaking, ""uniform"" (*cough* cutting corners *cough*) across
+    the sensitivity range of the sensor (300-1100nm wavelength).
+
+    It is possible to supply different estimations for the ratio, depending
+    on your specific lighting conditions where you need thresholds (because that
+    would be the only situation where I would recommend using this function).
+
+      TSL2561_APPROXCHRATIO_SUN = 0.325
+      TSL2561_APPROXCHRATIO_LED = 0.100
+
+    The formula's, I refer to p23 of the datasheet to see where they come from
+    (which seems to be an empiric formula from TAOS).
+
+    Note: below is a mixture of fixed point & floating point math; sorry, did
+    not have the time to rewrite everything in fixed point math.
+
+*/
+/**************************************************************************/
+uint32_t Adafruit_TSL2561_Unified::calculateRawCH0(uint16_t lux, float approxChRatio)
+{
+  unsigned long luxScale;
+  unsigned long ch0Scale = 0;
+  unsigned long chScale;
+
+  /* First, go to fixed point math scale -- reference scale is 2^TSL2561_LUX_CHSCALE = 2^10 */
+  luxScale = (lux << TSL2561_LUX_CHSCALE);
+
+  /* Next, calculate from lux to (scaled) channel0 values */
+#ifdef TSL2561_PACKAGE_CS
+  // CS Package
+  // ----------------------
+  // For calculating CH1/CH0 to Lux (p23 datasheet):
+  //    For 0 < CH1/CH0 < 0.52      Lux = 0.0315 * CH0 - 0.0593 * CH0 * ((CH1/CH0)^1.4)
+  //    For 0.52 < CH1/CH0 < 0.65   Lux = 0.0229 * CH0 - 0.0291 * CH1
+  //    For 0.65 < CH1/CH0 < 0.80   Lux = 0.0157 * CH0 - 0.0180 * CH1
+  //    For 0.80 < CH1/CH0 < 1.30   Lux = 0.00338 * CH0 - 0.00260 * CH1
+  //    For CH1/CH0 > 1.30          Lux = 0
+  //
+  // Replacing CH1 = (CH1/CH0) * CH0 = approxChRatio * CH0, we can solve all
+  // of these for CH0:
+  //
+  //    For 0 < CH1/CH0 < 0.52      Lux = (0.0315 - 0.0593 * ((approxChRatio)^1.4) )* CH0
+  //    For 0.52 < CH1/CH0 < 0.65   Lux = (0.0229 - 0.0291 * approxChRatio) * CH0
+  //    For 0.65 < CH1/CH0 < 0.80   Lux = (0.0157 - 0.0180 * approxChRatio) * CH0
+  //    For 0.80 < CH1/CH0 < 1.30   Lux = (0.00338 - 0.00260 * approxChRatio) * CH0
+  //    For CH1/CH0 > 1.30          Lux = 0
+  //
+
+  float divisor = 1;
+  if(approxChRatio > 1.30) {
+    return 0xFFFF;
+  } else if(approxChRatio > 0.80) {
+    divisor = (0.00338 - 0.00260 * approxChRatio);
+  } else if(approxChRatio > 0.65) {
+    divisor = (0.0157 - 0.0180 * approxChRatio);
+  } else if(approxChRatio > 0.52) {
+    divisor = (0.0229 - 0.0291 * approxChRatio);
+  } else {
+    // 0 < chRatio < 0.50
+    divisor = (0.0315 - 0.0593 * pow(approxChRatio, 1.4));
+  }
+#else
+  // T, FN, and CL Package
+  // ----------------------
+  // For calculating CH1/CH0 to Lux (p23 datasheet):
+  //    For 0 < CH1/CH0 < 0.50     Lux = 0.0304 * CH0 - 0.062 * CH0 * ((CH1/CH0)^1.4)
+  //    For 0.50 < CH1/CH0 < 0.61  Lux = 0.0224 * CH0 - 0.031 * CH1
+  //    For 0.61 < CH1/CH0 < 0.80  Lux = 0.0128  * CH0 - 0.0153 * CH1
+  //    For 0.80 < CH1/CH0 < 1.30  Lux = 0.00146 * CH0 - 0.00112 * CH1
+  //    For CH1/CH0 > 1.30         Lux = 0
+  //
+  // Replacing CH1 = (CH1/CH0) * CH0 = approxChRatio * CH0, we can solve all
+  // of these for CH0:
+  //
+  //    For 0 < CH1/CH0 < 0.50     Lux = ( 0.0304 - 0.062 * ((approxChRatio)^1.4)) * CH0
+  //    For 0.50 < CH1/CH0 < 0.61  Lux = (0.0224 - 0.031 * approxChRatio) * CH0
+  //    For 0.61 < CH1/CH0 < 0.80  Lux = (0.0128 - 0.0153 * approxChRatio) * CH0
+  //    For 0.80 < CH1/CH0 < 1.30  Lux = (0.00146 - 0.00112 * approxChRatio) * CH0
+  //    For CH1/CH0 > 1.30         Lux = 0 --> we return the highest possible value 0xFFFF
+  //
+
+  float divisor = 1;
+  if(approxChRatio > 1.30) {
+    // Easy one :)
+    return 0xFFFF;
+  } else if(approxChRatio > 0.80) {
+    divisor = (0.00146 - 0.00112 * approxChRatio);
+  } else if(approxChRatio > 0.61) {
+    divisor = (0.0128 - 0.0153 * approxChRatio);
+  } else if(approxChRatio > 0.50) {
+    divisor = (0.0224 - 0.031 * approxChRatio);
+  } else {
+    // 0 < chRatio < 0.50
+    divisor = (0.0304 - 0.062 * pow(approxChRatio, 1.4));
+  }
+
+  // Calculate CH0 value (fixed point scaled)
+  if (divisor > 0) {
+    ch0Scale = (unsigned long)(luxScale / divisor);
+  } else {
+    return 0xFFFF;
+  }
+#endif
+
+  /* Now, we need to scale back down... the correct scale depends on the
+     integration time and the gain */
+
+  switch (_tsl2561IntegrationTime)
+  {
+    case TSL2561_INTEGRATIONTIME_13MS:
+      chScale = TSL2561_LUX_CHSCALE_TINT0;
+      break;
+    case TSL2561_INTEGRATIONTIME_101MS:
+      chScale = TSL2561_LUX_CHSCALE_TINT1;
+      break;
+    default: /* No scaling ... integration time = 402ms */
+      chScale = (1 << TSL2561_LUX_CHSCALE);
+      break;
+  }
+
+  /* Scale for gain (1x or 16x) */
+  if (!_tsl2561Gain) {
+    chScale = chScale << 4;
+  }
+
+  /* Scale the channel value back */
+  return (ch0Scale / chScale);
+}
+
+/**************************************************************************/
+/*!
     @brief  Gets the most recent sensor event
     returns true if sensor reading is between 0 and 65535 lux
     returns false if sensor is saturated
@@ -495,10 +697,10 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
 {
   uint16_t broadband, ir;
-  
+
   /* Clear the event */
   memset(event, 0, sizeof(sensors_event_t));
-  
+
   event->version   = sizeof(sensors_event_t);
   event->sensor_id = _tsl2561SensorID;
   event->type      = SENSOR_TYPE_LIGHT;
@@ -507,9 +709,9 @@ bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
   /* Calculate the actual lux value */
   getLuminosity(&broadband, &ir);
   event->light = calculateLux(broadband, ir);
-  
+
   if (event->light == 65536) {
-    return false;	
+    return false;
   }
   return true;
 }
@@ -534,4 +736,76 @@ void Adafruit_TSL2561_Unified::getSensor(sensor_t *sensor)
   sensor->max_value   = 17000.0;  /* Based on trial and error ... confirm! */
   sensor->min_value   = 0.0;
   sensor->resolution  = 1.0;
+}
+
+
+/**************************************************************************/
+/*!
+    @brief  Sets up interrupt control on the TSL2561
+
+    Values for control & persist:
+      TSL2561_INTERRUPTCTL_DISABLE: interrupt output disabled
+      TSL2561_INTERRUPTCTL_LEVEL: use level interrupt, see setInterruptThreshold(),
+          datasheet calls this "traditional interrupt".
+      TSL2561_INTERRUPTCTL_SMBALERT: if you need this, you'll know what this means :).
+      TSL2561_INTERRUPTCTL_TEST: Sets interrupt and functions like SMBALERT mode.
+
+      intpersist = 0, every integration cycle generates an interrupt
+      intpersist = 1, any value outside of threshold generates an interrupt
+      intpersist = 2 to 15, value must be outside of threshold for 2 to 15 integration cycles
+
+      Note: A persist value of 0 causes an interrupt to occur after every integration cycle regardless
+      of the threshold settings. A value of 1 results in an interrupt after one integration
+      time period outside the threshold window. A value of N (where N is 2 through 15) results
+      in an interrupt only if the value remains outside the threshold window for N consecutive
+      integration cycles. For example, if N is equal to 10 and the integration time is 402 ms,
+      then the total time is approximately 4 seconds.
+
+*/
+/**************************************************************************/
+
+void Adafruit_TSL2561_Unified::setInterruptControl(tsl2561InterruptControl_t intcontrol, uint8_t intpersist) {
+  // Are we initialized?
+  if (!_tsl2561Initialised) begin();
+  /* Enable the device by setting the control bit to 0x03 */
+  enable();
+
+  uint8_t cmd = TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT;
+  uint8_t data = ((intcontrol & 0B00000011) << 4) | (intpersist & 0B00001111);
+
+  /* Update the interrupt control register */
+  write8(cmd, data);
+
+  /* Turn the device off to save power */
+  // NOTE: This disables interrupts so no good idea if you need them :)
+  if(_allowSleep) disable();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Set interrupt thresholds (TSL2561 supports only interrupts
+    generated by thresholds on channel 0).
+
+    Important: values supplied as thresholds are raw sensor values, and
+    NOT values in the SI lux unit. In order to get an estimation of the
+    raw value to pass here when you want a lux value as a threshold, use
+    the calculateRawCH0() function with the right approximation parameter.
+*/
+/**************************************************************************/
+
+void Adafruit_TSL2561_Unified::setInterruptThreshold(uint16_t lowThreshold, uint16_t highThreshold) {
+	// Write low and high threshold values
+	write16(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDL_LOW , lowThreshold);
+  write16(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDH_LOW , highThreshold);
+}
+
+/**************************************************************************/
+/*!
+    @brief  Clears an active interrupt
+*/
+/**************************************************************************/
+
+void Adafruit_TSL2561_Unified::clearLevelInterrupt(void) {
+	// Send command byte for interrupt clear
+  writereg8(TSL2561_COMMAND_BIT | TSL2561_CLEAR_BIT);
 }
