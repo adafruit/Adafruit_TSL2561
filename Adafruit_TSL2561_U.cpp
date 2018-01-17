@@ -1,168 +1,45 @@
-/**************************************************************************/
 /*!
-    @file     Adafruit_TSL2561.cpp
-    @author   K.Townsend (Adafruit Industries)
-    @license  BSD (see license.txt)
-
-    Driver for the TSL2561 digital luminosity (light) sensors.
-
-    Pick one up at http://www.adafruit.com/products/439
-
-    Adafruit invests time and resources providing this open source code,
-    please support Adafruit and open-source hardware by purchasing
-    products from Adafruit!
-
-    @section  HISTORY
-
-    v2.0 - Rewrote driver for Adafruit_Sensor and Auto-Gain support, and
-           added lux clipping check (returns 0 lux on sensor saturation)
-    v1.0 - First release (previously TSL2561)
+ * @file Adafruit_TSL2561_U.cpp
+ *
+ * @mainpage Adafruit TSL2561 Light/Lux sensor driver
+ *
+ * @section intro_sec Introduction
+ *
+ * This is the documentation for Adafruit's TSL2561 driver for the
+ * Arduino platform.  It is designed specifically to work with the
+ * Adafruit TSL2561 breakout: http://www.adafruit.com/products/439
+ *
+ * These sensors use I2C to communicate, 2 pins (SCL+SDA) are required
+ * to interface with the breakout.
+ *
+ * Adafruit invests time and resources providing this open source code,
+ * please support Adafruit and open-source hardware by purchasing
+ * products from Adafruit!
+ *
+ * @section dependencies Dependencies
+ *
+ * This library depends on <a href="https://github.com/adafruit/Adafruit_Sensor">
+ * Adafruit_Sensor</a> being present on your system. Please make sure you have
+ * installed the latest version before using this library.
+ *
+ * @section author Author
+ *
+ * Written by Kevin "KTOWN" Townsend for Adafruit Industries.
+ *
+ * @section license License
+ *
+ * BSD license, all text here must be included in any redistribution.
+ *
+ *   @section  HISTORY
+ *
+ *   v2.0 - Rewrote driver for Adafruit_Sensor and Auto-Gain support, and
+ *          added lux clipping check (returns 0 lux on sensor saturation)
+ *   v1.0 - First release (previously TSL2561)
 */
 /**************************************************************************/
-#if defined(__AVR__)
-#include <avr/pgmspace.h>
-#include <util/delay.h>
-#elif !defined(TEENSYDUINO)
-#include "pgmspace.h"
-#endif
-#include <stdlib.h>
 
 #include "Adafruit_TSL2561_U.h"
 
-#define TSL2561_DELAY_INTTIME_13MS    (15)
-#define TSL2561_DELAY_INTTIME_101MS   (120)
-#define TSL2561_DELAY_INTTIME_402MS   (450)
-
-/*========================================================================*/
-/*                          PRIVATE FUNCTIONS                             */
-/*========================================================================*/
-
-/**************************************************************************/
-/*!
-    @brief  Writes a register and an 8 bit value over I2C
-*/
-/**************************************************************************/
-void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
-{
-  wire -> beginTransmission(_addr);
-  #if ARDUINO >= 100
-  wire -> write(reg);
-  wire -> write(value & 0xFF);
-  #else
-  wire -> send(reg);
-  wire -> send(value & 0xFF);
-  #endif
-  wire -> endTransmission();
-}
-
-/**************************************************************************/
-/*!
-    @brief  Reads an 8 bit value over I2C
-*/
-/**************************************************************************/
-uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
-{
-  wire -> beginTransmission(_addr);
-  #if ARDUINO >= 100
-  wire -> write(reg);
-  #else
-  wire -> send(reg);
-  #endif
-  wire -> endTransmission();
-
-  wire -> requestFrom(_addr, 1);
-  #if ARDUINO >= 100
-  return wire -> read();
-  #else
-  return wire -> receive();
-  #endif
-}
-
-/**************************************************************************/
-/*!
-    @brief  Reads a 16 bit values over I2C
-*/
-/**************************************************************************/
-uint16_t Adafruit_TSL2561_Unified::read16(uint8_t reg)
-{
-  uint16_t x; uint16_t t;
-
-  wire -> beginTransmission(_addr);
-  #if ARDUINO >= 100
-  wire -> write(reg);
-  #else
-  wire -> send(reg);
-  #endif
-  wire -> endTransmission();
-
-  wire -> requestFrom(_addr, 2);
-  #if ARDUINO >= 100
-  t = wire -> read();
-  x = wire -> read();
-  #else
-  t = wire -> receive();
-  x = wire -> receive();
-  #endif
-  x <<= 8;
-  x |= t;
-  return x;
-}
-
-/**************************************************************************/
-/*!
-    Enables the device
-*/
-/**************************************************************************/
-void Adafruit_TSL2561_Unified::enable(void)
-{
-  /* Enable the device by setting the control bit to 0x03 */
-  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWERON);
-}
-
-/**************************************************************************/
-/*!
-    Disables the device (putting it in lower power sleep mode)
-*/
-/**************************************************************************/
-void Adafruit_TSL2561_Unified::disable(void)
-{
-  /* Turn the device off to save power */
-  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWEROFF);
-}
-
-/**************************************************************************/
-/*!
-    Private function to read luminosity on both channels
-*/
-/**************************************************************************/
-void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
-{
-  /* Enable the device by setting the control bit to 0x03 */
-  enable();
-
-  /* Wait x ms for ADC to complete */
-  switch (_tsl2561IntegrationTime)
-  {
-    case TSL2561_INTEGRATIONTIME_13MS:
-      delay(TSL2561_DELAY_INTTIME_13MS);  // KTOWN: Was 14ms
-      break;
-    case TSL2561_INTEGRATIONTIME_101MS:
-      delay(TSL2561_DELAY_INTTIME_101MS); // KTOWN: Was 102ms
-      break;
-    default:
-      delay(TSL2561_DELAY_INTTIME_402MS); // KTOWN: Was 403ms
-      break;
-  }
-
-  /* Reads a two byte value from channel 0 (visible + infrared) */
-  *broadband = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW);
-
-  /* Reads a two byte value from channel 1 (infrared) */
-  *ir = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW);
-
-  /* Turn the device off to save power */
-  disable();
-}
 
 /*========================================================================*/
 /*                            CONSTRUCTORS                                */
@@ -170,7 +47,10 @@ void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
 
 /**************************************************************************/
 /*!
-    Constructor
+    @brief Constructor
+    @param addr The I2C address this chip can be found on, 0x29, 0x39 or 0x49
+    @param sensorID An optional ID that will be placed in sensor events to help
+                    keep track if you have many sensors in use
 */
 /**************************************************************************/
 Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID)
@@ -189,24 +69,41 @@ Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorI
 
 /**************************************************************************/
 /*!
-    Initializes I2C and configures the sensor (call this function before
-    doing anything else)
+    @brief Initializes I2C and configures the sensor with default Wire I2C
+           (call this function before doing anything else)
+    @returns True if sensor is found and initialized, false otherwise.
 */
 /**************************************************************************/
 boolean Adafruit_TSL2561_Unified::begin()
 {
   wire = &Wire;
-  wire -> begin();
+  _i2c->begin();
   return init();
 }
 
+/**************************************************************************/
+/*!
+    @brief Initializes I2C and configures the sensor with provided I2C device
+           (call this function before doing anything else)
+    @param theWire A pointer to any I2C interface (e.g. &Wire1)
+    @returns True if sensor is found and initialized, false otherwise.
+*/
+/**************************************************************************/
 boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire)
 {
   wire = theWire;
-  wire -> begin();
+  _i2c-> begin();
   return init();
 }
 
+/**************************************************************************/
+/*!
+    @brief  Initializes I2C connection and settings. 
+    Attempts to determine if the sensor is contactable, then sets up a default
+    integration time and gain. Then powers down the chip.
+    @returns True if sensor is found and initialized, false otherwise.
+*/
+/**************************************************************************/
 boolean Adafruit_TSL2561_Unified::init()
 {
   /* Make sure we're actually connected */
@@ -231,6 +128,7 @@ boolean Adafruit_TSL2561_Unified::init()
 /*!
     @brief  Enables or disables the auto-gain settings when reading
             data from the sensor
+    @param enable Set to true to enable, False to disable
 */
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::enableAutoRange(bool enable)
@@ -240,7 +138,10 @@ void Adafruit_TSL2561_Unified::enableAutoRange(bool enable)
 
 /**************************************************************************/
 /*!
-    Sets the integration time for the TSL2561
+    @brief      Sets the integration time for the TSL2561. Higher time means
+                more light captured (better for low light conditions) but will
+		take longer to run readings.
+    @param time The amount of time we'd like to add up values
 */
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::setIntegrationTime(tsl2561IntegrationTime_t time)
@@ -262,7 +163,8 @@ void Adafruit_TSL2561_Unified::setIntegrationTime(tsl2561IntegrationTime_t time)
 
 /**************************************************************************/
 /*!
-    Adjusts the gain on the TSL2561 (adjusts the sensitivity to light)
+    @brief  Adjusts the gain on the TSL2561 (adjusts the sensitivity to light)
+    @param gain The value we'd like to set the gain to
 */
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain)
@@ -286,6 +188,10 @@ void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain)
 /*!
     @brief  Gets the broadband (mixed lighting) and IR only values from
             the TSL2561, adjusting gain if auto-gain is enabled
+    @param  broadband Pointer to a uint16_t we will fill with a sensor 
+                      reading from the IR+visible light diode.
+    @param  ir Pointer to a uint16_t we will fill with a sensor the 
+               IR-only light diode.
 */
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::getLuminosity (uint16_t *broadband, uint16_t *ir)
@@ -370,10 +276,79 @@ void Adafruit_TSL2561_Unified::getLuminosity (uint16_t *broadband, uint16_t *ir)
   } while (!valid);
 }
 
+
+
 /**************************************************************************/
 /*!
-    Converts the raw sensor values to the standard SI lux equivalent.
-    Returns 0 if the sensor is saturated and the values are unreliable.
+    Enables the device
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::enable(void)
+{
+  /* Enable the device by setting the control bit to 0x03 */
+  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWERON);
+}
+
+/**************************************************************************/
+/*!
+    Disables the device (putting it in lower power sleep mode)
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::disable(void)
+{
+  /* Turn the device off to save power */
+  write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWEROFF);
+}
+
+/**************************************************************************/
+/*!
+    Private function to read luminosity on both channels
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
+{
+  /* Enable the device by setting the control bit to 0x03 */
+  enable();
+
+  /* Wait x ms for ADC to complete */
+  switch (_tsl2561IntegrationTime)
+  {
+    case TSL2561_INTEGRATIONTIME_13MS:
+      delay(TSL2561_DELAY_INTTIME_13MS);  // KTOWN: Was 14ms
+      break;
+    case TSL2561_INTEGRATIONTIME_101MS:
+      delay(TSL2561_DELAY_INTTIME_101MS); // KTOWN: Was 102ms
+      break;
+    default:
+      delay(TSL2561_DELAY_INTTIME_402MS); // KTOWN: Was 403ms
+      break;
+  }
+
+  /* Reads a two byte value from channel 0 (visible + infrared) */
+  *broadband = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW);
+
+  /* Reads a two byte value from channel 1 (infrared) */
+  *ir = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW);
+
+  /* Turn the device off to save power */
+  disable();
+}
+
+
+/**************************************************************************/
+/*!
+    @brief  Converts the raw sensor values to the standard SI lux equivalent.
+    @param  broadband The 16-bit sensor reading from the IR+visible light diode.
+    @param  ir The 16-bit sensor reading from the IR-only light diode.
+    @returns The integer Lux value we calcuated. 
+             Returns 0 if the sensor is saturated and the values are 
+             unreliable, or 65536 if the sensor is saturated.
+*/
+/**************************************************************************/
+/**************************************************************************/
+/*!
+    
+    Returns 
 */
 /**************************************************************************/
 uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
@@ -488,8 +463,10 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 /**************************************************************************/
 /*!
     @brief  Gets the most recent sensor event
-    returns true if sensor reading is between 0 and 65535 lux
-    returns false if sensor is saturated
+    @param  event Pointer to a sensor_event_t type that will be filled 
+                  with the lux value, timestamp, data type and sensor ID.
+    @returns True if sensor reading is between 0 and 65535 lux, 
+             false if sensor is saturated
 */
 /**************************************************************************/
 bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
@@ -517,6 +494,8 @@ bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event)
 /**************************************************************************/
 /*!
     @brief  Gets the sensor_t data
+    @param  sensor A pointer to a sensor_t structure that we will fill with
+                   details about the TSL2561 and its capabilities
 */
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::getSensor(sensor_t *sensor)
@@ -534,4 +513,65 @@ void Adafruit_TSL2561_Unified::getSensor(sensor_t *sensor)
   sensor->max_value   = 17000.0;  /* Based on trial and error ... confirm! */
   sensor->min_value   = 1.0;
   sensor->resolution  = 1.0;
+}
+
+
+
+/*========================================================================*/
+/*                          PRIVATE FUNCTIONS                             */
+/*========================================================================*/
+
+/**************************************************************************/
+/*!
+    @brief  Writes a register and an 8 bit value over I2C
+    @param  reg I2C register to write the value to
+    @param  value The 8-bit value we're writing to the register
+*/
+/**************************************************************************/
+void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint8_t value)
+{
+  _i2c->beginTransmission(_addr);
+  _i2c->write(reg);
+  _i2c->write(value);
+  _i2c->endTransmission();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Reads an 8 bit value over I2C
+    @param  reg I2C register to read from
+    @returns 8-bit value containing single byte data read
+*/
+/**************************************************************************/
+uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
+{
+  _i2c->beginTransmission(_addr);
+  _i2c->write(reg);
+  _i2c->endTransmission();
+
+  _i2c->requestFrom(_addr, 1);
+  return _i2c-> read();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Reads a 16 bit values over I2C
+    @param  reg I2C register to read from
+    @returns 16-bit value containing 2-byte data read
+*/
+/**************************************************************************/
+uint16_t Adafruit_TSL2561_Unified::read16(uint8_t reg)
+{
+  uint16_t x, t;
+
+  _i2c->beginTransmission(_addr);
+  _i2c->write(reg);
+  _i2c->endTransmission();
+
+  _i2c->requestFrom(_addr, 2);
+  t = _i2c->read();
+  x = _i2c->read();
+  x <<= 8;
+  x |= t;
+  return x;
 }
