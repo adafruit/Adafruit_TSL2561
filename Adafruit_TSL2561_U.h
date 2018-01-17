@@ -44,7 +44,7 @@
 #define TSL2561_BLOCK_BIT         (0x10)    ///< 1 = using block read/write
 
 #define TSL2561_CONTROL_POWERON   (0x03)    ///< Control register setting to turn on
-#define TSL2561_CONTROL_POWEROFF  (0x00))   ///< Control register setting to turn off
+#define TSL2561_CONTROL_POWEROFF  (0x00)    ///< Control register setting to turn off
 
 #define TSL2561_LUX_LUXSCALE      (14)      ///< Scale by 2^14
 #define TSL2561_LUX_RATIOSCALE    (9)       ///< Scale ratio by 2^9
