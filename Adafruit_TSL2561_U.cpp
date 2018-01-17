@@ -76,7 +76,7 @@ Adafruit_TSL2561_Unified::Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorI
 /**************************************************************************/
 boolean Adafruit_TSL2561_Unified::begin()
 {
-  wire = &Wire;
+  _i2c = &Wire;
   _i2c->begin();
   return init();
 }
@@ -91,7 +91,7 @@ boolean Adafruit_TSL2561_Unified::begin()
 /**************************************************************************/
 boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire)
 {
-  wire = theWire;
+  _i2c = theWire;
   _i2c-> begin();
   return init();
 }
