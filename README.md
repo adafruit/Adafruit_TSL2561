@@ -1,6 +1,9 @@
-# Adafruit TSL2561 Light Sensor Driver #
+# Adafruit TSL2561 Light Sensor Driver #  [![Build Status](https://travis-ci.org/adafruit/Adafruit_TSL2561.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_TSL2561)
 
 This driver is for the Adafruit TSL2561 Breakout, and is based on Adafruit's Unified Sensor Library (Adafruit_Sensor).
+
+<img src="https://cdn-shop.adafruit.com/970x728/439-00.jpg" height="300"/>
+
 
 The driver supports manual or 'auto' gain. Adjusting the gain allows you to make the sensor more or less 'sensitive' to light (depending on if you are indoors or outdoors, for example):
 ```
