@@ -16,9 +16,9 @@
    
    Connections
    ===========
-   Connect SCL to analog 5
-   Connect SDA to analog 4
-   Connect VDD to 3.3V DC
+   Connect SCL to I2C SCL Clock
+   Connect SDA to I2C SDA Data
+   Connect VDD to 3.3V or 5V (whatever your logic level is)
    Connect GROUND to common ground
 
    I2C Address
