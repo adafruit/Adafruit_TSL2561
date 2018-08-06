@@ -107,7 +107,9 @@ boolean Adafruit_TSL2561_Unified::init()
 {
   /* Make sure we're actually connected */
   uint8_t x = read8(TSL2561_REGISTER_ID);
-  if ((x & 0xF0) != 0x0A) { // ID code for TSL2561
+  // Valid PartNumbers are 0x00, 0x02, 0x08, and 0x0A,
+  // if sensor is not connected x may return 0xFF
+  if (x & 0x05) {
     return false;
   }
   _tsl2561Initialised = true;
