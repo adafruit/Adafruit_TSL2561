@@ -18,7 +18,7 @@
    ===========
    Connect SCL to I2C SCL Clock
    Connect SDA to I2C SDA Data
-   Connect VCC to 3.3V or 5V (depending on sensor's logic level, check the datasheet)
+   Connect VCC/VDD to 3.3V or 5V (depends on sensor's logic level, check the datasheet)
    Connect GROUND to common ground
 
    I2C Address
