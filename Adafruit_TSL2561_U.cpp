@@ -97,7 +97,7 @@ boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire)
 
 /**************************************************************************/
 /*!
-    @brief  Initializes I2C connection and settings. 
+    @brief  Initializes I2C connection and settings.
     Attempts to determine if the sensor is contactable, then sets up a default
     integration time and gain. Then powers down the chip.
     @returns True if sensor is found and initialized, false otherwise.
@@ -131,7 +131,7 @@ boolean Adafruit_TSL2561_Unified::init()
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::enableAutoRange(bool enable)
 {
-   _tsl2561AutoGain = enable ? true : false;
+   _tsl2561AutoGain = enable;
 }
 
 /**************************************************************************/
@@ -186,9 +186,9 @@ void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain)
 /*!
     @brief  Gets the broadband (mixed lighting) and IR only values from
             the TSL2561, adjusting gain if auto-gain is enabled
-    @param  broadband Pointer to a uint16_t we will fill with a sensor 
+    @param  broadband Pointer to a uint16_t we will fill with a sensor
                       reading from the IR+visible light diode.
-    @param  ir Pointer to a uint16_t we will fill with a sensor the 
+    @param  ir Pointer to a uint16_t we will fill with a sensor the
                IR-only light diode.
 */
 /**************************************************************************/
@@ -338,15 +338,15 @@ void Adafruit_TSL2561_Unified::getData (uint16_t *broadband, uint16_t *ir)
     @brief  Converts the raw sensor values to the standard SI lux equivalent.
     @param  broadband The 16-bit sensor reading from the IR+visible light diode.
     @param  ir The 16-bit sensor reading from the IR-only light diode.
-    @returns The integer Lux value we calcuated. 
-             Returns 0 if the sensor is saturated and the values are 
+    @returns The integer Lux value we calcuated.
+             Returns 0 if the sensor is saturated and the values are
              unreliable, or 65536 if the sensor is saturated.
 */
 /**************************************************************************/
 /**************************************************************************/
 /*!
-    
-    Returns 
+
+    Returns
 */
 /**************************************************************************/
 uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
@@ -461,9 +461,9 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 /**************************************************************************/
 /*!
     @brief  Gets the most recent sensor event
-    @param  event Pointer to a sensor_event_t type that will be filled 
+    @param  event Pointer to a sensor_event_t type that will be filled
                   with the lux value, timestamp, data type and sensor ID.
-    @returns True if sensor reading is between 0 and 65535 lux, 
+    @returns True if sensor reading is between 0 and 65535 lux,
              false if sensor is saturated
 */
 /**************************************************************************/
@@ -548,7 +548,7 @@ uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
   _i2c->endTransmission();
 
   _i2c->requestFrom(_addr, 1);
-  return _i2c-> read();
+  return _i2c->read();
 }
 
 /**************************************************************************/
