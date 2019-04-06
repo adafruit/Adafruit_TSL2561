@@ -57,5 +57,7 @@ Light sensors will always report units in lux, gyroscopes will always report uni
 
 ## About this Driver ##
 
+Adafruit invests time and resources providing this open source code.  Please support Adafruit and open-source hardware by purchasing products from Adafruit!
+
 Written by Kevin (KTOWN) Townsend for Adafruit Industries.
 Additions for interrupt support by Tim Jacobs in 2017.
