@@ -159,8 +159,8 @@
 
 // Approximations for Channel 1 to Channel 0 ratio for specific light conditions
 // -> See discussion near calculateRawCH0() function for details
-#define TSL2561_APPROXCHRATIO_SUN 0.325
-#define TSL2561_APPROXCHRATIO_LED 0.100
+#define TSL2561_APPROXCHRATIO_SUN 0.325 // Approximate ratio for sunlight
+#define TSL2561_APPROXCHRATIO_LED 0.100 // Approximate ratio for light from LEDs
 
 /** TSL2561 I2C Registers */
 enum
@@ -180,6 +180,11 @@ enum
   TSL2561_REGISTER_CHAN1_HIGH       = 0x0F  // Light data channel 1, high byte
 };
 
+/** Three options for integration time delays */
+#define TSL2561_DELAY_INTTIME_13MS    (15)  // 13 ms
+#define TSL2561_DELAY_INTTIME_101MS   (120) // 101 ms
+#define TSL2561_DELAY_INTTIME_402MS   (450) // 402 ms
+
 /** Three options for how long to integrate readings for */
 typedef enum
 {
@@ -197,6 +202,7 @@ typedef enum
 }
 tsl2561Gain_t;
 
+/** Four options for Interrupt Control */
 typedef enum
 {
   TSL2561_INTERRUPTCTL_DISABLE         = 0x00,    // 0B00
