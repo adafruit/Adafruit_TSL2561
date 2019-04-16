@@ -58,15 +58,15 @@
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
 {
-  wire -> beginTransmission(_addr);
+  _i2c-> beginTransmission(_addr);
   #if ARDUINO >= 100
-  wire -> write(reg);
-  wire -> write(value & 0xFF);
+  _i2c-> write(reg);
+  _i2c-> write(value & 0xFF);
   #else
-  wire -> send(reg);
-  wire -> send(value & 0xFF);
+  _i2c-> send(reg);
+  _i2c-> send(value & 0xFF);
   #endif
-  wire -> endTransmission();
+  _i2c-> endTransmission();
 }
 
 /**************************************************************************/
@@ -76,13 +76,13 @@ void Adafruit_TSL2561_Unified::write8 (uint8_t reg, uint32_t value)
 /**************************************************************************/
 void Adafruit_TSL2561_Unified::writereg8 (uint8_t reg)
 {
-  wire -> beginTransmission(_addr);
+  _i2c-> beginTransmission(_addr);
   #if ARDUINO >= 100
-  wire -> write(reg);
+  _i2c-> write(reg);
   #else
-  wire -> send(reg);
+  _i2c-> send(reg);
   #endif
-  wire -> endTransmission();
+  _i2c-> endTransmission();
 }
 
 /**************************************************************************/
@@ -106,19 +106,19 @@ void Adafruit_TSL2561_Unified::write16 (uint8_t reg, uint32_t value)
 /**************************************************************************/
 uint8_t Adafruit_TSL2561_Unified::read8(uint8_t reg)
 {
-  wire -> beginTransmission(_addr);
+  _i2c-> beginTransmission(_addr);
   #if ARDUINO >= 100
-  wire -> write(reg);
+  _i2c-> write(reg);
   #else
-  wire -> send(reg);
+  _i2c-> send(reg);
   #endif
-  wire -> endTransmission();
+  _i2c-> endTransmission();
 
-  wire -> requestFrom(_addr, 1);
+  _i2c-> requestFrom(_addr, 1);
   #if ARDUINO >= 100
-  return wire -> read();
+  return _i2c-> read();
   #else
-  return wire -> receive();
+  return _i2c-> receive();
   #endif
 }
 
@@ -131,21 +131,21 @@ uint16_t Adafruit_TSL2561_Unified::read16(uint8_t reg)
 {
   uint16_t x; uint16_t t;
 
-  wire -> beginTransmission(_addr);
+  _i2c-> beginTransmission(_addr);
   #if ARDUINO >= 100
-  wire -> write(reg);
+  _i2c-> write(reg);
   #else
-  wire -> send(reg);
+  _i2c-> send(reg);
   #endif
-  wire -> endTransmission();
+  _i2c-> endTransmission();
 
-  wire -> requestFrom(_addr, 2);
+  _i2c-> requestFrom(_addr, 2);
   #if ARDUINO >= 100
-  t = wire -> read();
-  x = wire -> read();
+  t = _i2c-> read();
+  x = _i2c-> read();
   #else
-  t = wire -> receive();
-  x = wire -> receive();
+  t = _i2c-> receive();
+  x = _i2c-> receive();
   #endif
   x <<= 8;
   x |= t;

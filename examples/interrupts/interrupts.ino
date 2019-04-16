@@ -39,6 +39,7 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 1234
 
 // We assume the Adafruit TSL2561's "int" pin is attached to this digital pin
 #define INTERRUPT_PIN 0
+#define THRESHOLD     3000
 
 /**************************************************************************/
 /*
@@ -82,7 +83,7 @@ void configureSensor(void)
   /* Configure interrupt thresholds */
   // First: convert lux value to raw sensor value, using "sunlight" approximation.
   // Other approximations, see Adafruit_TSL2561_U.h
-  uint32_t threshold = tsl.calculateRawCH0(3000, TSL2561_APPROXCHRATIO_SUN);
+  uint32_t threshold = tsl.calculateRawCH0(THRESHOLD, TSL2561_APPROXCHRATIO_SUN);
   tsl.setInterruptThreshold(0,threshold);
 
   /* Enable level interrupt, trigger interrupt after 5 integration times
@@ -99,6 +100,7 @@ void configureSensor(void)
   Serial.println("------------------------------------");
   Serial.print  ("Gain:         "); Serial.println("Auto");
   Serial.print  ("Timing:       "); Serial.println("13 ms");
+  Serial.print  ("Threshold     "); Serial.print(THRESHOLD); Serial.println(" lux");
   Serial.println("------------------------------------");
 }
 
