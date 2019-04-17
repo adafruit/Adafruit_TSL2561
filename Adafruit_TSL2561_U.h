@@ -159,8 +159,8 @@
 
 // Approximations for Channel 1 to Channel 0 ratio for specific light conditions
 // -> See discussion near calculateRawCH0() function for details
-#define TSL2561_APPROXCHRATIO_SUN 0.325 // Approximate ratio for sunlight
-#define TSL2561_APPROXCHRATIO_LED 0.100 // Approximate ratio for light from LEDs
+#define TSL2561_APPROXCHRATIO_SUN (0.325)   //< Approximate ratio for sunlight
+#define TSL2561_APPROXCHRATIO_LED (0.100)   //< Approximate ratio for light from LEDs
 
 /** TSL2561 I2C Registers */
 enum
