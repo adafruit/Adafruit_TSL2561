@@ -443,10 +443,12 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
 #endif
 
   unsigned long temp;
-  temp = ((channel0 * b) - (channel1 * m));
-
+  channel0 = channel0 * b;
+  channel1 = channel1 * m;
+  
+  temp = 0;
   /* Do not allow negative lux value */
-  if (temp < 0) temp = 0;
+  if (channel0 > channel1) temp = channel0 - channel1;
 
   /* Round lsb (2^(LUX_SCALE-1)) */
   temp += (1 << (TSL2561_LUX_LUXSCALE-1));
