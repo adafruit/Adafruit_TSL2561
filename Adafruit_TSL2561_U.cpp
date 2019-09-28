@@ -407,7 +407,7 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband, uint16_t ir)
   unsigned int b, m;
 
 #ifdef TSL2561_PACKAGE_CS
-  if ((ratio >= 0) && (ratio <= TSL2561_LUX_K1C))
+  if (ratio <= TSL2561_LUX_K1C)
     {b=TSL2561_LUX_B1C; m=TSL2561_LUX_M1C;}
   else if (ratio <= TSL2561_LUX_K2C)
     {b=TSL2561_LUX_B2C; m=TSL2561_LUX_M2C;}
