@@ -122,6 +122,11 @@
 #define TSL2561_CLIPPING_402MS                                                 \
   (65000) ///< # Counts that trigger a change in gain/integration
 
+// Approximations for Channel 1 to Channel 0 ratio for specific light conditions
+// -> See discussion near calculateRawCH0() function for details
+#define TSL2561_APPROXCHRATIO_SUN 0.325
+#define TSL2561_APPROXCHRATIO_LED 0.100
+
 // Delay for integration times
 #define TSL2561_DELAY_INTTIME_13MS (15)   ///< Wait 15ms for 13ms integration
 #define TSL2561_DELAY_INTTIME_101MS (120) ///< Wait 120ms for 101ms integration
@@ -158,6 +163,16 @@ typedef enum {
   TSL2561_GAIN_16X = 0x10, // 16x gain
 } tsl2561Gain_t;
 
+
+typedef enum
+{
+  TSL2561_INTERRUPTCTL_DISABLE         = 0x00,    // 0B00
+  TSL2561_INTERRUPTCTL_LEVEL           = 0x01,    // 0B01
+  TSL2561_INTERRUPTCTL_SMBALERT        = 0x02,    // 0B10
+  TSL2561_INTERRUPTCTL_TEST            = 0x03     // 0B11
+}
+tsl2561InterruptControl_t;
+
 /**************************************************************************/
 /*!
     @brief  Class that stores state and functions for interacting with TSL2561
@@ -166,7 +181,7 @@ typedef enum {
 /**************************************************************************/
 class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
 public:
-  Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1);
+  Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1,  bool allowSleep = true);
   boolean begin(void);
   boolean begin(TwoWire *theWire);
   boolean init();
@@ -177,10 +192,18 @@ public:
   void setGain(tsl2561Gain_t gain);
   void getLuminosity(uint16_t *broadband, uint16_t *ir);
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
+   uint32_t calculateRawCH0(uint16_t lux, float approxChRatio = TSL2561_APPROXCHRATIO_SUN);
+
 
   /* Unified Sensor API Functions */
   bool getEvent(sensors_event_t *);
   void getSensor(sensor_t *);
+  
+  // Interrupt functions
+  void setInterruptControl(tsl2561InterruptControl_t intcontrol, uint8_t intpersist);
+  void setInterruptThreshold(uint16_t lowThreshold, uint16_t highThreshold);
+  void clearLevelInterrupt(void);
+  
 
 private:
   TwoWire *_i2c;
@@ -191,10 +214,13 @@ private:
   tsl2561IntegrationTime_t _tsl2561IntegrationTime;
   tsl2561Gain_t _tsl2561Gain;
   int32_t _tsl2561SensorID;
+    boolean _allowSleep;
 
   void enable(void);
   void disable(void);
   void write8(uint8_t reg, uint8_t value);
+  void write16 (uint8_t reg, uint32_t value);
+  void writereg8 (uint8_t reg);
   uint8_t read8(uint8_t reg);
   uint16_t read16(uint8_t reg);
   void getData(uint16_t *broadband, uint16_t *ir);
