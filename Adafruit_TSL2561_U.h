@@ -35,17 +35,17 @@
 #define TSL2561_ADDR_HIGH (0x49)  ///< Default address (pin pulled high)
 
 // Lux calculations differ slightly for CS package
-//#define TSL2561_PACKAGE_CS                ///< Chip scale package
+// #define TSL2561_PACKAGE_CS                ///< Chip scale package
 #define TSL2561_PACKAGE_T_FN_CL ///< Dual Flat No-Lead package
 
 #define TSL2561_COMMAND_BIT (0x80) ///< Must be 1
-#define TSL2561_CLEAR_BIT                                                      \
+#define TSL2561_CLEAR_BIT \
   (0x40) ///< Clears any pending interrupt (write 1 to clear)
 #define TSL2561_WORD_BIT (0x20)  ///< 1 = read/write word (rather than byte)
 #define TSL2561_BLOCK_BIT (0x10) ///< 1 = using block read/write
 
 #define TSL2561_CONTROL_POWERON (0x03) ///< Control register setting to turn on
-#define TSL2561_CONTROL_POWEROFF                                               \
+#define TSL2561_CONTROL_POWEROFF \
   (0x00) ///< Control register setting to turn off
 
 #define TSL2561_LUX_LUXSCALE (14)          ///< Scale by 2^14
@@ -115,11 +115,11 @@
 #define TSL2561_AGC_TLO_402MS (500)   ///< Min value at Ti 402ms = 500
 
 // Clipping thresholds
-#define TSL2561_CLIPPING_13MS                                                  \
+#define TSL2561_CLIPPING_13MS \
   (4900) ///< # Counts that trigger a change in gain/integration
-#define TSL2561_CLIPPING_101MS                                                 \
+#define TSL2561_CLIPPING_101MS \
   (37000) ///< # Counts that trigger a change in gain/integration
-#define TSL2561_CLIPPING_402MS                                                 \
+#define TSL2561_CLIPPING_402MS \
   (65000) ///< # Counts that trigger a change in gain/integration
 
 // Delay for integration times
@@ -165,25 +165,25 @@ typedef enum {
 */
 /**************************************************************************/
 class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
-public:
+ public:
   Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1);
   boolean begin(void);
-  boolean begin(TwoWire *theWire);
+  boolean begin(TwoWire* theWire);
   boolean init();
 
   /* TSL2561 Functions */
   void enableAutoRange(bool enable);
   void setIntegrationTime(tsl2561IntegrationTime_t time);
   void setGain(tsl2561Gain_t gain);
-  void getLuminosity(uint16_t *broadband, uint16_t *ir);
+  void getLuminosity(uint16_t* broadband, uint16_t* ir);
   uint32_t calculateLux(uint16_t broadband, uint16_t ir);
 
   /* Unified Sensor API Functions */
-  bool getEvent(sensors_event_t *);
-  void getSensor(sensor_t *);
+  bool getEvent(sensors_event_t*);
+  void getSensor(sensor_t*);
 
-private:
-  TwoWire *_i2c;
+ private:
+  TwoWire* _i2c;
 
   int8_t _addr;
   boolean _tsl2561Initialised;
@@ -197,7 +197,7 @@ private:
   void write8(uint8_t reg, uint8_t value);
   uint8_t read8(uint8_t reg);
   uint16_t read16(uint8_t reg);
-  void getData(uint16_t *broadband, uint16_t *ir);
+  void getData(uint16_t* broadband, uint16_t* ir);
 };
 
 #endif // ADAFRUIT_TSL2561_H
