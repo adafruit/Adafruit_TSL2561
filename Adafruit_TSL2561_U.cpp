@@ -88,7 +88,7 @@ boolean Adafruit_TSL2561_Unified::begin() {
     @returns True if sensor is found and initialized, false otherwise.
 */
 /**************************************************************************/
-boolean Adafruit_TSL2561_Unified::begin(TwoWire *theWire) {
+boolean Adafruit_TSL2561_Unified::begin(TwoWire* theWire) {
   _i2c = theWire;
   _i2c->begin();
   return init();
@@ -191,8 +191,8 @@ void Adafruit_TSL2561_Unified::setGain(tsl2561Gain_t gain) {
                IR-only light diode.
 */
 /**************************************************************************/
-void Adafruit_TSL2561_Unified::getLuminosity(uint16_t *broadband,
-                                             uint16_t *ir) {
+void Adafruit_TSL2561_Unified::getLuminosity(uint16_t* broadband,
+                                             uint16_t* ir) {
   bool valid = false;
 
   if (!_tsl2561Initialised)
@@ -213,18 +213,18 @@ void Adafruit_TSL2561_Unified::getLuminosity(uint16_t *broadband,
 
     /* Get the hi/low threshold for the current integration time */
     switch (_it) {
-    case TSL2561_INTEGRATIONTIME_13MS:
-      _hi = TSL2561_AGC_THI_13MS;
-      _lo = TSL2561_AGC_TLO_13MS;
-      break;
-    case TSL2561_INTEGRATIONTIME_101MS:
-      _hi = TSL2561_AGC_THI_101MS;
-      _lo = TSL2561_AGC_TLO_101MS;
-      break;
-    default:
-      _hi = TSL2561_AGC_THI_402MS;
-      _lo = TSL2561_AGC_TLO_402MS;
-      break;
+      case TSL2561_INTEGRATIONTIME_13MS:
+        _hi = TSL2561_AGC_THI_13MS;
+        _lo = TSL2561_AGC_TLO_13MS;
+        break;
+      case TSL2561_INTEGRATIONTIME_101MS:
+        _hi = TSL2561_AGC_THI_101MS;
+        _lo = TSL2561_AGC_TLO_101MS;
+        break;
+      default:
+        _hi = TSL2561_AGC_THI_402MS;
+        _lo = TSL2561_AGC_TLO_402MS;
+        break;
     }
 
     getData(&_b, &_ir);
@@ -290,21 +290,21 @@ void Adafruit_TSL2561_Unified::disable(void) {
     Private function to read luminosity on both channels
 */
 /**************************************************************************/
-void Adafruit_TSL2561_Unified::getData(uint16_t *broadband, uint16_t *ir) {
+void Adafruit_TSL2561_Unified::getData(uint16_t* broadband, uint16_t* ir) {
   /* Enable the device by setting the control bit to 0x03 */
   enable();
 
   /* Wait x ms for ADC to complete */
   switch (_tsl2561IntegrationTime) {
-  case TSL2561_INTEGRATIONTIME_13MS:
-    delay(TSL2561_DELAY_INTTIME_13MS); // KTOWN: Was 14ms
-    break;
-  case TSL2561_INTEGRATIONTIME_101MS:
-    delay(TSL2561_DELAY_INTTIME_101MS); // KTOWN: Was 102ms
-    break;
-  default:
-    delay(TSL2561_DELAY_INTTIME_402MS); // KTOWN: Was 403ms
-    break;
+    case TSL2561_INTEGRATIONTIME_13MS:
+      delay(TSL2561_DELAY_INTTIME_13MS); // KTOWN: Was 14ms
+      break;
+    case TSL2561_INTEGRATIONTIME_101MS:
+      delay(TSL2561_DELAY_INTTIME_101MS); // KTOWN: Was 102ms
+      break;
+    default:
+      delay(TSL2561_DELAY_INTTIME_402MS); // KTOWN: Was 403ms
+      break;
   }
 
   /* Reads a two byte value from channel 0 (visible + infrared) */
@@ -344,15 +344,15 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband,
   /* Make sure the sensor isn't saturated! */
   uint16_t clipThreshold;
   switch (_tsl2561IntegrationTime) {
-  case TSL2561_INTEGRATIONTIME_13MS:
-    clipThreshold = TSL2561_CLIPPING_13MS;
-    break;
-  case TSL2561_INTEGRATIONTIME_101MS:
-    clipThreshold = TSL2561_CLIPPING_101MS;
-    break;
-  default:
-    clipThreshold = TSL2561_CLIPPING_402MS;
-    break;
+    case TSL2561_INTEGRATIONTIME_13MS:
+      clipThreshold = TSL2561_CLIPPING_13MS;
+      break;
+    case TSL2561_INTEGRATIONTIME_101MS:
+      clipThreshold = TSL2561_CLIPPING_101MS;
+      break;
+    default:
+      clipThreshold = TSL2561_CLIPPING_402MS;
+      break;
   }
 
   /* Return 65536 lux if the sensor is saturated */
@@ -362,15 +362,15 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband,
 
   /* Get the correct scale depending on the intergration time */
   switch (_tsl2561IntegrationTime) {
-  case TSL2561_INTEGRATIONTIME_13MS:
-    chScale = TSL2561_LUX_CHSCALE_TINT0;
-    break;
-  case TSL2561_INTEGRATIONTIME_101MS:
-    chScale = TSL2561_LUX_CHSCALE_TINT1;
-    break;
-  default: /* No scaling ... integration time = 402ms */
-    chScale = (1 << TSL2561_LUX_CHSCALE);
-    break;
+    case TSL2561_INTEGRATIONTIME_13MS:
+      chScale = TSL2561_LUX_CHSCALE_TINT0;
+      break;
+    case TSL2561_INTEGRATIONTIME_101MS:
+      chScale = TSL2561_LUX_CHSCALE_TINT1;
+      break;
+    default: /* No scaling ... integration time = 402ms */
+      chScale = (1 << TSL2561_LUX_CHSCALE);
+      break;
   }
 
   /* Scale for gain (1x or 16x) */
@@ -473,7 +473,7 @@ uint32_t Adafruit_TSL2561_Unified::calculateLux(uint16_t broadband,
              false if sensor is saturated
 */
 /**************************************************************************/
-bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event) {
+bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t* event) {
   uint16_t broadband, ir;
 
   /* Clear the event */
@@ -501,7 +501,7 @@ bool Adafruit_TSL2561_Unified::getEvent(sensors_event_t *event) {
                    details about the TSL2561 and its capabilities
 */
 /**************************************************************************/
-void Adafruit_TSL2561_Unified::getSensor(sensor_t *sensor) {
+void Adafruit_TSL2561_Unified::getSensor(sensor_t* sensor) {
   /* Clear the sensor_t object */
   memset(sensor, 0, sizeof(sensor_t));
 
